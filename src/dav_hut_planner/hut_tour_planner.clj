@@ -1,7 +1,8 @@
 (ns dav-hut-planner.hut_tour_planner
-  (:require [org.httpkit.client :as http]
+  (:require [clojure.string :as str]
+            [org.httpkit.client :as http]
             [jsonista.core :as json]
-            [camel-snake-kebab.core :refer [->kebab-case-keyword ->camelCaseString]]
+            [camel-snake-kebab.core :refer [->kebab-case-keyword]]
             [promesa.core :as p])
   (:import (java.time LocalDate)
            (java.time.format DateTimeFormatter)))
@@ -25,11 +26,11 @@
                           (if error (reject error) (resolve resp)))))))
 
 (defn- parse-cookies [resp]
-  (let [pairs (-> resp :headers :set-cookie (clojure.string/split #","))
+  (let [pairs (-> resp :headers :set-cookie (str/split #","))
         key-vals (->> pairs
-                      (map #(clojure.string/split % #"; "))
+                      (map #(str/split % #"; "))
                       (map first)
-                      (mapcat #(clojure.string/split % #"=")))]
+                      (mapcat #(str/split % #"=")))]
     (apply hash-map key-vals)))
 
 (defn str->local-date [s] (LocalDate/parse s dav-date-fmt))
@@ -100,7 +101,8 @@
 
   (tour-possible-dates! [riemannhaus ingolstaedterhaus]
                         (LocalDate/parse "2021-08-24")
-                        (LocalDate/parse "2021-11-01"))
+                        (LocalDate/parse "2021-11-01")
+                        5)
 
   (def tour-options [[{:date (LocalDate/parse "2021-08-23") :hut :karwendelhaus}
                       {:date (LocalDate/parse "2021-08-24") :hut :karwendelhaus}

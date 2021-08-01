@@ -1,6 +1,5 @@
 (ns dav-hut-planner.web
-  (:require [clojure.string :as str]
-            [org.httpkit.server :refer [run-server]]
+  (:require [org.httpkit.server :refer [run-server]]
             [reitit.ring :as ring]
             [ring.middleware.params :as params]
             [ring.util.response :as response]
@@ -99,7 +98,7 @@ document.addEventListener('click', e => {
                                                 [:td {:style "padding: 8px;"} (fmt-date (:date stop))])])]])))]
     (response/response html)))
 
-(defn configure-tour-planner-handler [req]
+(defn configure-tour-planner-handler [_req]
   (let [first-start-date (LocalDate/now)
         last-start-date (.plusDays (LocalDate/now) 14)
         html (hiccup/html (page-container
