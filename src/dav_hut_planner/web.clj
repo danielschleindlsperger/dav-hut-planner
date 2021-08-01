@@ -1,5 +1,6 @@
 (ns dav-hut-planner.web
-  (:require [org.httpkit.server :refer [run-server]]
+  (:require [clojure.string :as str]
+            [org.httpkit.server :refer [run-server]]
             [reitit.ring :as ring]
             [ring.middleware.params :as params]
             [ring.util.response :as response]
@@ -16,6 +17,8 @@
 (def date-fmt (DateTimeFormatter/ofPattern "dd.MM."))
 (defn- fmt-date [^LocalDate date]
   (.format date date-fmt))
+(defn- fmt-hut-name [s]
+  (first (str/split s #",")))
 
 (defn page-container [& body]
   (page/html5
@@ -74,11 +77,13 @@
                                            :huts             huts
                                            :stops            stops})
                             [:h2 "Possible Tour Dates"]
-                            (let [stops (map :dav-hut-id (first tours))]
+                            (let [hut-names-by-id (reduce #(assoc %1 (:dav-hut-id %2) (:hut-name %2)) {} huts)
+                                  stops (map :dav-hut-id (first tours))]
                               [:table {:style "border-collapse: collapse;"}
                                [:thead
                                 [:tr (for [stop stops]
-                                       [:th stop])]]
+                                       [:th {:style "padding: 8px;"}
+                                        (fmt-hut-name (get hut-names-by-id stop "HUT_NAME_NOT_FOUND"))])]]
                                [:tbody (for [tour tours]
                                          [:tr (for [stop tour]
                                                 [:td {:style "padding: 8px;"} (fmt-date (:date stop))])])]])))]
