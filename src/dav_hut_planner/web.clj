@@ -8,7 +8,8 @@
             [hiccup.page :as page]
             [hiccup.core :as hiccup]
             [hiccup.form :as form]
-            [dav-hut-planner.hut_tour_planner :as planner])
+            [dav-hut-planner.hut_tour_planner :as planner]
+            [dav-hut-planner.huts :refer [get-huts!]])
   (:import (java.time LocalDate)
            (java.time.format DateTimeFormatter)))
 
@@ -22,11 +23,15 @@
      [:title "DAV Hut Planner"]
      (page/include-css "https://unpkg.com/sanitize.css"
                        "https://unpkg.com/sanitize.css/typography.css"
-                       "https://unpkg.com/sanitize.css/forms.css")]
+                       "https://unpkg.com/sanitize.css/forms.css"
+                       "/css/nice-select2.css"
+                       ;"/css/style.css"
+                       )]
     [:body {:style "max-width: 64rem; margin: 2rem auto; padding: 0 2rem;"} body
-     (page/include-js "/app.js")]))
+     (page/include-js "/js/nice-select2.js")
+     (page/include-js "/js/app.js")]))
 
-(defn planner-form [{:keys [first-start-date last-start-date head-count stops]}]
+(defn planner-form [{:keys [first-start-date last-start-date head-count stops huts]}]
   (form/form-to
     {:id "planner-form" :style "display: grid; grid-gap: 2rem;"}
     [:get "/plan-tour"]
@@ -43,7 +48,9 @@
     [:fieldset {:id "tour-stops" :style "display: grid; grid-gap: 1rem;"}
      [:legend "Tour stops"]
      (for [stop stops]
-       [:div (form/text-field {:style "flex: 0 1 auto;"} "stops" stop)
+       [:div
+        (form/drop-down {} "stops" (for [{:keys [dav-hut-id hut-name]} huts]
+                                     [hut-name dav-hut-id]) stop)
         [:button {:data-remove-stop true} "X"]])
      [:button {:id "add-stop"} "Add stop"]]
 
@@ -53,7 +60,8 @@
   (let [first-start-date (LocalDate/parse (get-in req [:query-params "firstStartDate"]))
         last-start-date (LocalDate/parse (get-in req [:query-params "lastStartDate"]))
         head-count (Integer/parseInt (or (get-in req [:query-params "headCount"]) "3"))
-        stops (flatten [(get-in req [:query-params "stops"])])
+        stops (map #(Integer/parseInt %) (flatten [(get-in req [:query-params "stops"])]))
+        huts @(get-huts!)
         tours (planner/tour-possible-dates! stops
                                             first-start-date
                                             last-start-date
@@ -63,6 +71,7 @@
                             (planner-form {:first-start-date first-start-date
                                            :last-start-date  last-start-date
                                            :head-count       head-count
+                                           :huts             huts
                                            :stops            stops})
                             [:h2 "Possible Tour Dates"]
                             (let [stops (map :dav-hut-id (first tours))]
@@ -78,11 +87,13 @@
 (defn configure-tour-planner-handler [_req]
   (let [first-start-date (LocalDate/now)
         last-start-date (.plusDays (LocalDate/now) 14)
+        huts @(get-huts!)
         html (hiccup/html (page-container
                             [:h1 "Tour Planner"]
                             (planner-form {:first-start-date first-start-date
                                            :last-start-date  last-start-date
-                                           :stops            ["87" "87" "437" "354"]
+                                           :huts             huts
+                                           :stops            [145 144]
                                            :head-count       3})))]
     (-> html (response/response) (response/content-type "text/html"))))
 
