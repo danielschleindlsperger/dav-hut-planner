@@ -1,6 +1,5 @@
 (ns dav-hut-planner.hut_tour_planner
   (:require [clojure.string :as str]
-            [org.httpkit.client :as http]
             [jsonista.core :as json]
             [camel-snake-kebab.core :refer [->kebab-case-keyword]]
             [promesa.core :as p]
@@ -12,13 +11,6 @@
 (def ^:private json-kebab-keyword-mapper
   (json/object-mapper {:decode-key-fn ->kebab-case-keyword}))
 (def ^:private days-per-request 14)                         ;; arbitrary number of days that the DAV API returns per request. Makes it easier to parallelize.
-
-(def config {:huts           {:karwendelhaus    "87"
-                              :lamsenjochhuette "437"
-                              :falkenhuette     "354"}
-             :bed-categories {7 "Matratzenlager"
-                              8 "Mehrbettzimmer"
-                              9 "Zweierzimmer"}})
 
 (defn- parse-cookies [resp]
   (let [pairs (-> resp :headers :set-cookie (str/split #","))
@@ -34,7 +26,7 @@
   "Visit the webpage for a hut. This will create a session on the server.
    Returns the cookies that need to be included in the subsequent requests in order for the hut to be in scope of the request."
   [hut-id]
-  (let [cookies (parse-cookies @(http/get "https://www.alpsonline.org/reservation/calendar"
+  (let [cookies (parse-cookies @(http-get "https://www.alpsonline.org/reservation/calendar"
                                           {:query-params {"hut_id" hut-id
                                                           "lang"   "de_DE"}}))
         cookie-header (clojure.string/join ";" (map (fn [[k v]] (str k "=" v)) cookies))]
@@ -98,17 +90,6 @@
                         (LocalDate/parse "2021-08-24")
                         (LocalDate/parse "2021-11-01")
                         5)
-
-  (def tour-options [[{:date (LocalDate/parse "2021-08-23") :hut :karwendelhaus}
-                      {:date (LocalDate/parse "2021-08-24") :hut :karwendelhaus}
-                      {:date (LocalDate/parse "2021-08-25") :hut :falkenhuette}
-                      {:date (LocalDate/parse "2021-08-26") :hut :lamsenjochhuette}]
-
-                     [{:date (LocalDate/parse "2021-08-29") :hut :karwendelhaus}
-                      {:date (LocalDate/parse "2021-08-30") :hut :karwendelhaus}
-                      {:date (LocalDate/parse "2021-08-31") :hut :falkenhuette}
-                      {:date (LocalDate/parse "2021-09-01") :hut :lamsenjochhuette}]
-                     ])
   )
 
 
