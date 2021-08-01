@@ -3,6 +3,7 @@
             [reitit.ring :as ring]
             [ring.middleware.params :as params]
             [ring.util.response :as response]
+            [ring.middleware.defaults :as ring-defaults]
             [taoensso.timbre :as log]
             [hiccup.page :as page]
             [hiccup.core :as hiccup]
@@ -96,7 +97,7 @@ document.addEventListener('click', e => {
                                [:tbody (for [tour tours]
                                          [:tr (for [stop tour]
                                                 [:td {:style "padding: 8px;"} (fmt-date (:date stop))])])]])))]
-    (response/response html)))
+    (-> html (response/response) (response/content-type "text/html"))))
 
 (defn configure-tour-planner-handler [_req]
   (let [first-start-date (LocalDate/now)
@@ -107,7 +108,7 @@ document.addEventListener('click', e => {
                                            :last-start-date  last-start-date
                                            :stops            ["87" "87" "437" "354"]
                                            :head-count       3})))]
-    (response/response html)))
+    (-> html (response/response) (response/content-type "text/html"))))
 
 (def default-handler
   (ring/create-default-handler
@@ -119,7 +120,8 @@ document.addEventListener('click', e => {
   (ring/ring-handler (ring/router [["/" {:get configure-tour-planner-handler}]
                                    ["/plan-tour" {:get plan-tour-handler}]])
                      default-handler
-                     {:middleware [params/wrap-params]}))
+                     {:middleware [[params/wrap-params]
+                                   [ring-defaults/wrap-defaults ring-defaults/site-defaults]]}))
 
 (defonce server (atom nil))
 
