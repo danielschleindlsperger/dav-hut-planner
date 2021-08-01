@@ -1,0 +1,23 @@
+name: 'CapRover Deploy'
+description: 'Deploy to your self-hosted CapRover service. https://caprover.com/'
+inputs:
+  caprover_url:
+    description: 'The endpoint of your CapRover instance.'
+    required: true
+  password:
+    description: 'The password to your CapRover instance'
+    required: true
+  app_name:
+    description: 'The name of the targeted app.'
+    required: true
+  image_name:
+    description: 'Full image name to be deployed. With registry and tags and all.'
+    required: true
+outputs: {}
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args: []
+branding:
+  icon: zap
+  color: orange

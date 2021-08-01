@@ -1,0 +1,10 @@
+name: 'Version Current Commit'
+description: 'Generates a version number from git sha and commit date and outputs it.'
+inputs: {}
+outputs:
+  version:
+    description: 'The version of the current commit.'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args: []

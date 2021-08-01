@@ -1,0 +1,39 @@
+{:deps    {org.clojure/clojure                 {:mvn/version "1.10.3"}
+           org.clojure/core.cache              {:mvn/version "1.0.207"}
+
+           ;; logging
+           com.taoensso/timbre                 {:mvn/version "5.1.2"}
+           com.fzakaria/slf4j-timbre           {:mvn/version "0.3.21"}
+
+           ;; HTTP
+           http-kit/http-kit                   {:mvn/version "2.5.3"}
+           metosin/reitit                      {:mvn/version "0.5.12"}
+           ring/ring-core                      {:mvn/version "1.9.2"}
+           ring/ring-headers                   {:mvn/version "0.3.0"}
+
+           ;; HTML
+           hiccup/hiccup                       {:mvn/version "2.0.0-alpha2"}
+
+           ;; JSON
+           metosin/jsonista                    {:mvn/version "0.3.1"}
+           camel-snake-kebab/camel-snake-kebab {:mvn/version "0.4.2"}
+
+           ;; validation/modelling
+           metosin/malli                       {:mvn/version "0.4.0"}
+
+           ;; async
+           funcool/promesa                     {:mvn/version "6.0.0"}}
+ :paths   ["src" "resources"]
+ :aliases {:run-m   {:main-opts ["-m" "dav-hut-planner.main"]}
+           :dev     {:extra-paths ["dev/src" "dev/resources" "test"]}
+           :test    {:extra-paths ["test"]
+                     :extra-deps  {lambdaisland/kaocha           {:mvn/version "1.0.861"}
+                                   lambdaisland/kaocha-cloverage {:mvn/version "1.0.75"}
+                                   org.clojure/test.check        {:mvn/version "1.1.0"}
+                                   ring/ring-mock                {:mvn/version "0.4.0"}
+                                   http-kit.fake/http-kit.fake   {:mvn/version "0.2.2"}}}
+           :uberjar {:replace-deps {com.github.seancorfield/depstar {:mvn/version "2.0.211"}}
+                     :exec-fn      hf.depstar/uberjar
+                     :exec-args    {:aot        true
+                                    :jar        "target/dav-hut-planner.jar"
+                                    :main-class "dav-hut-planner.main"}}}}
