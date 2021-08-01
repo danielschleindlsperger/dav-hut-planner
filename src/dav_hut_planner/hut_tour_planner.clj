@@ -26,11 +26,11 @@
   "Visit the webpage for a hut. This will create a session on the server.
    Returns the cookies that need to be included in the subsequent requests in order for the hut to be in scope of the request."
   [hut-id]
-  (let [cookies (parse-cookies @(http-get "https://www.alpsonline.org/reservation/calendar"
-                                          {:query-params {"hut_id" hut-id
-                                                          "lang"   "de_DE"}}))
-        cookie-header (clojure.string/join ";" (map (fn [[k v]] (str k "=" v)) cookies))]
-    cookie-header))
+  (-> (http-get "https://www.alpsonline.org/reservation/calendar"
+                {:query-params {"hut_id" hut-id
+                                "lang"   "de_DE"}})
+      (p/then parse-cookies)
+      (p/then (fn [cookies] (clojure.string/join ";" (map (fn [[k v]] (str k "=" v)) cookies))))))
 
 (defn request-dates [^LocalDate initial-date]
   (iterate #(.plusDays % days-per-request) initial-date))
@@ -50,13 +50,12 @@
                      (map #(select-keys % [:reservation-date :free-room :closed :bed-category-id :total-room :booking-enabled])))))))
 
 (defn hut-data [hut-id ^LocalDate start-date ^LocalDate end-date]
-  (let [cookie-header (set-hut-session! hut-id)
-        dates (doall (take-while #(.isBefore % end-date) (request-dates start-date)))
-        results (->> (p/all (map #(get-hut-data cookie-header %) dates))
-                     deref
-                     flatten
-                     (group-by :reservation-date))]
-    results))
+  (let [dates (doall (take-while #(.isBefore % end-date) (request-dates start-date)))]
+    (-> (set-hut-session! hut-id)
+        (p/then (fn [cookie-header]
+                  (p/all (map #(get-hut-data cookie-header %) dates))))
+        (p/then flatten)
+        (p/then #(group-by :reservation-date %)))))
 
 (defn room-available-on-date? [categories-on-date head-count]
   (let [pred (every-pred (complement :closed)
@@ -65,10 +64,12 @@
     (some pred categories-on-date)))
 
 (defn tour-possible-dates! [tour-stages ^LocalDate first-start-date ^LocalDate last-start-date head-count]
-  (let [hut-reservations (reduce (fn [acc dav-hut-id]
-                                   (assoc acc dav-hut-id (hut-data dav-hut-id first-start-date last-start-date)))
-                                 {}
-                                 (set tour-stages))
+  (let [hut-reservations @(p/then (p/all (map (fn [dav-hut-id]
+                                                (p/then (hut-data dav-hut-id first-start-date last-start-date)
+                                                        #(assoc {:dav-hut-id dav-hut-id} :hut-data %)))
+                                              (set tour-stages)))
+                                  #(reduce (fn [acc {:keys [dav-hut-id hut-data]}]
+                                             (assoc acc dav-hut-id hut-data)) {} %))
         initial-tour (map-indexed (fn [idx stage] {:dav-hut-id stage :date (.plusDays first-start-date idx)}) tour-stages)
         all-tours (iterate (fn [tour] (map (fn [stage] (update stage :date #(.plusDays % 1))) tour)) initial-tour)
         tours-in-time-scope (take-while #(.isBefore (-> % first :date) last-start-date) all-tours)]
@@ -86,10 +87,10 @@
   (def riemannhaus "145")
   (def ingolstaedterhaus "144")
 
-  (tour-possible-dates! [riemannhaus ingolstaedterhaus]
-                        (LocalDate/parse "2021-08-24")
-                        (LocalDate/parse "2021-11-01")
-                        5)
+  (time (tour-possible-dates! [riemannhaus ingolstaedterhaus]
+                              (LocalDate/parse "2021-08-24")
+                              (LocalDate/parse "2021-11-01")
+                              5))
   )
 
 
