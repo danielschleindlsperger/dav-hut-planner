@@ -26,8 +26,8 @@ jobs:
           cli: 1.10.3.822
       - name: Checkout source
         uses: actions/checkout@v1
-      - name: Run tests
-        run: ./bin/kaocha
+#      - name: Run tests
+#        run: ./bin/kaocha
       - name: Lint with clj-kondo
         run: clj-kondo --lint src
       - name: Determine version
