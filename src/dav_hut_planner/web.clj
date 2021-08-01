@@ -8,7 +8,6 @@
             [hiccup.page :as page]
             [hiccup.core :as hiccup]
             [hiccup.form :as form]
-            [hiccup.element :as el]
             [dav-hut-planner.hut_tour_planner :as planner])
   (:import (java.time LocalDate)
            (java.time.format DateTimeFormatter)))
@@ -17,27 +16,6 @@
 (defn- fmt-date [^LocalDate date]
   (.format date date-fmt))
 
-(def add-stop-js "
-const btn = document.getElementById('add-stop')
-btn.addEventListener('click', e => {
-  e.preventDefault()
-  const tourStops = document.getElementById('tour-stops')
-  const cloneTarget = tourStops?.querySelector('input[type=\"text\"]').parentNode
-  const clone = cloneTarget.cloneNode(true)
-  clone.querySelector('input').value = null
-  tourStops.insertBefore(clone, btn)
-})
-")
-
-(def remove-stop-js "
-document.addEventListener('click', e => {
-  if (e.target && e.target.dataset.hasOwnProperty(\"removeStop\")) {
-    e.preventDefault()
-    e.target.parentNode.remove()
-  }
-})
-")
-
 (defn page-container [& body]
   (page/html5
     [:head
@@ -45,7 +23,8 @@ document.addEventListener('click', e => {
      (page/include-css "https://unpkg.com/sanitize.css"
                        "https://unpkg.com/sanitize.css/typography.css"
                        "https://unpkg.com/sanitize.css/forms.css")]
-    [:body {:style "max-width: 64rem; margin: 2rem auto; padding: 0 2rem;"} body]))
+    [:body {:style "max-width: 64rem; margin: 2rem auto; padding: 0 2rem;"} body
+     (page/include-js "/app.js")]))
 
 (defn planner-form [{:keys [first-start-date last-start-date head-count stops]}]
   (form/form-to
@@ -67,9 +46,6 @@ document.addEventListener('click', e => {
        [:div (form/text-field {:style "flex: 0 1 auto;"} "stops" stop)
         [:button {:data-remove-stop true} "X"]])
      [:button {:id "add-stop"} "Add stop"]]
-
-    (el/javascript-tag add-stop-js)
-    (el/javascript-tag remove-stop-js)
 
     (form/submit-button "Go")))
 

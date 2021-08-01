@@ -3,7 +3,8 @@
             [org.httpkit.client :as http]
             [jsonista.core :as json]
             [camel-snake-kebab.core :refer [->kebab-case-keyword]]
-            [promesa.core :as p])
+            [promesa.core :as p]
+            [dav-hut-planner.util :refer [http-get]])
   (:import (java.time LocalDate)
            (java.time.format DateTimeFormatter)))
 
@@ -18,12 +19,6 @@
              :bed-categories {7 "Matratzenlager"
                               8 "Mehrbettzimmer"
                               9 "Zweierzimmer"}})
-
-(defn- http-get [url opts]
-  (p/create (fn [resolve reject]
-              (http/get url opts
-                        (fn [{:keys [error] :as resp}]
-                          (if error (reject error) (resolve resp)))))))
 
 (defn- parse-cookies [resp]
   (let [pairs (-> resp :headers :set-cookie (str/split #","))
