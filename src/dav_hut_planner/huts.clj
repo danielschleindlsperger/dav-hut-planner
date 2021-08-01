@@ -9,7 +9,7 @@
 (def json-mapper (jsonista/object-mapper {:decode-key-fn ->kebab-case-keyword}))
 
 (defn get-huts! []
-  (-> (http-get "https://sedlatschek.github.io/dav-hut-extractor/huts.json" {})
+  (-> (http-get "https://sedlatschek.github.io/dav-hut-extractor/huts/index.json" {})
       (p/then :body)
       (p/then #(jsonista/read-value % json-mapper))
       (p/then :huts)
