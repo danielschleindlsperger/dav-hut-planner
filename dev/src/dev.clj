@@ -4,9 +4,5 @@
 (defn restart []
   (restart-server))
 
-;; run once initially when jacking-in
+;; run once initially when jacking in
 (restart)
-
-(comment
-  (database/migrate!)
-  (crawl!))
